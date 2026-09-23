@@ -31,5 +31,16 @@
     "prisma": "8.0.0-rc.15",
     "tailwindcss": "^4.3.3",
     "typescript": "5.7.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "msgpackr-extract",
+      "workerd",
+      "@prisma/client",
+      "prisma",
+      "@next/swc-linux-x64-gnu",
+      "@next/swc-linux-x64-musl"
+    ]
   }
 }
