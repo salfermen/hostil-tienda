@@ -1,0 +1,118 @@
+// Esquema de la base de datos de HOSTIL.
+// Cada `model` es una tabla de PostgreSQL. Después de cambiar este archivo:
+//   pnpm db:migrate --name descripcion_del_cambio
+// Eso crea el SQL en prisma/migrations/ y regenera el cliente tipado.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Persona registrada. Solo los registrados reciben códigos de acceso a los drops.
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String?
+  status    UserStatus @default(ACTIVE)
+  /// Fecha en que aceptó la política de tratamiento de datos (Ley 1581 de 2012).
+  consentAt DateTime
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  accessTokens AccessToken[]
+}
+
+enum UserStatus {
+  ACTIVE
+  /// Bloqueado manualmente (por ejemplo, si compartió su código). No recibe más códigos.
+  BLOCKED
+}
+
+/// Una colección o drop. Solo puede haber uno activo (TEASER o LIVE) a la vez.
+model Drop {
+  id          String     @id @default(cuid())
+  slug        String     @unique
+  name        String
+  description String?
+  status      DropStatus @default(DRAFT)
+  /// Fecha anunciada de lanzamiento (se muestra en la cuenta regresiva).
+  launchAt    DateTime
+  /// Si se define, al pasar esta fecha el drop se considera cerrado automáticamente.
+  endsAt      DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  products     Product[]
+  accessTokens AccessToken[]
+}
+
+enum DropStatus {
+  /// En preparación: nadie lo ve (solo el admin).
+  DRAFT
+  /// Anunciado: el sitio se bloquea y muestra spoilers + registro. Aún no hay códigos.
+  TEASER
+  /// Lanzado: los registrados entran con su código personal.
+  LIVE
+  /// Terminado: el sitio vuelve a la landing pública.
+  CLOSED
+}
+
+model Product {
+  id           String   @id @default(cuid())
+  dropId       String
+  name         String
+  description  String?
+  /// Precio en pesos colombianos, sin decimales (129900 = $129.900).
+  priceCop     Int
+  tag          String?
+  /// Nombre del archivo dentro de storage/drops/<slug-del-drop>/ (nunca en /public).
+  imageKey     String
+  /// Si aparece difuminado en la pantalla de spoilers.
+  showInTeaser Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  drop Drop @relation(fields: [dropId], references: [id], onDelete: Cascade)
+
+  @@index([dropId, sortOrder])
+}
+
+/// Código de acceso personal: uno por usuario y por drop.
+/// Solo guardamos el hash; el código en texto plano solo existe en el correo.
+model AccessToken {
+  id          String    @id @default(cuid())
+  userId      String
+  dropId      String
+  tokenHash   String    @unique
+  /// Cuándo se envió el correo con el código. null = pendiente de envío.
+  sentAt      DateTime?
+  firstUsedAt DateTime?
+  lastUsedAt  DateTime?
+  /// Cuántas veces se usó para iniciar sesión. Un número muy alto puede indicar que lo compartieron.
+  useCount    Int       @default(0)
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  drop Drop @relation(fields: [dropId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dropId])
+  @@index([dropId, sentAt])
+}
+
+/// Registro de intentos de acceso fallidos para limitar ataques de fuerza bruta.
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  /// Qué se intentó: "code:<email>" o "admin".
+  scope     String
+  ip        String
+  createdAt DateTime @default(now())
+
+  @@index([scope, createdAt])
+  @@index([ip, createdAt])
+}
