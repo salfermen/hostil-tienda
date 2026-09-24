@@ -1,10 +1,22 @@
-pmOnFail: ignore
+# Ajustes de pnpm (desde pnpm 10 viven aquí y no en package.json).
+#
+# Paquetes a los que se les permite ejecutar scripts de instalación.
+# Solo aprobamos los que realmente descargan o compilan binarios.
+#   allowBuilds           -> lo lee pnpm 11+ (el proyecto usa pnpm 12, ver "packageManager")
+#   onlyBuiltDependencies -> lo lee pnpm 10 (por si algún entorno usa una versión anterior)
+allowBuilds:
+  '@prisma/engines': true
+  prisma: true
+  sharp: true
+  esbuild: true
+
+onlyBuiltDependencies:
+  - '@prisma/engines'
+  - prisma
+  - sharp
+  - esbuild
 
 minimumReleaseAgeExclude:
   - '@next/*'
   - next
-
-allowBuilds:
-  esbuild: set this to true or false
-  msgpackr-extract: set this to true or false
-  workerd: set this to true or false
+  - resend@6.29.0
