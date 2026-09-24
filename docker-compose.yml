@@ -1,0 +1,16 @@
+# Opcional: PostgreSQL local con Docker, si prefieres no usar una rama de Neon para desarrollar.
+#   docker compose up -d
+#   DATABASE_URL="postgresql://hostil:hostil@localhost:5432/hostil"
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: hostil
+      POSTGRES_PASSWORD: hostil
+      POSTGRES_DB: hostil
+    ports:
+      - '5432:5432'
+    volumes:
+      - hostil-db:/var/lib/postgresql/data
+volumes:
+  hostil-db:

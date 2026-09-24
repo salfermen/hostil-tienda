@@ -1,21 +1,27 @@
-# v0 sandbox internal files
+# Dependencias y builds
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+# Lo genera Next (next dev / next build / next typegen); cambia según el comando.
+next-env.d.ts
+
+# Cliente de Prisma generado (se regenera con `pnpm install` / `prisma generate`)
+lib/generated/
+
+# Variables de entorno: NUNCA se suben. El ejemplo sí.
+.env*
+!.env.example
+
+# Vercel / v0
+.vercel/
 __v0_runtime_loader.js
 __v0_devtools.tsx
 __v0_jsx-dev-runtime.ts
 .snowflake/
 .v0-trash/
-.vercel/
 
-# Environment variables
-.env*.local
-
-# Common ignores
-node_modules
-.next/
+# Sistema y logs
 .DS_Store
-
-node_modules/
-.next/
-out/
-.env*
+Thumbs.db
 *.log
